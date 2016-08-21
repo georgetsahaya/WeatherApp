@@ -3,13 +3,9 @@ package app.weather.com.weatherapp;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -18,19 +14,15 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
 import app.weather.com.weatherapp.model.WeatherResponse;
-import app.weather.com.weatherapp.util.InputDialog;
 import app.weather.com.weatherapp.util.PropertyUtil;
 import app.weather.com.weatherapp.util.WeatherReader;
 import rx.Observable;
@@ -53,7 +45,10 @@ public class WeatherActivity extends AppCompatActivity {
 
     ProgressDialog progressDialog;
 
-    private String [] noCity = { "noCities" };
+    private final String [] noCity = { "noCities" };
+    private final String EMPTY_STRING = "";
+    private final float KMPH_CONVERSION_FACTOR = 3.6f;
+    private final String DATE_FORMAT = "EEEE h:mm a";
 
     List<String> cityList;
     List<String> addedCities = new LinkedList<>();
@@ -172,17 +167,17 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     private void clearTable() {
-        tCity.setText("");
-        tUpdatedTime.setText("");
-        tTemperature.setText("");
-        tWeather.setText("");
-        tWind.setText("");
+        tCity.setText(EMPTY_STRING);
+        tUpdatedTime.setText(EMPTY_STRING);
+        tTemperature.setText(EMPTY_STRING);
+        tWeather.setText(EMPTY_STRING);
+        tWind.setText(EMPTY_STRING);
     }
 
     private void showDialog() {
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle(R.string.app_name);
-        progressDialog.setMessage("Getting weather data ...");
+        progressDialog.setMessage(getString(R.string.getting_weather));
         progressDialog.show();
     }
 
@@ -190,7 +185,7 @@ public class WeatherActivity extends AppCompatActivity {
         String toRet;
 
         try {
-            double kmph = Float.valueOf(mps) * 3.6;
+            double kmph = Float.valueOf(mps) * KMPH_CONVERSION_FACTOR;
 
             return String.format("%.2f", kmph) + " km/H";
         } catch (ArithmeticException e) {
@@ -200,7 +195,7 @@ public class WeatherActivity extends AppCompatActivity {
 
     private String getTimeStamp() {
         try {
-            SimpleDateFormat df = new SimpleDateFormat("EEEE h:mm a");
+            SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT);
             return df.format(new Date());
         } catch (Exception e) {
             return "";

@@ -22,6 +22,8 @@ public class WeatherReader {
     public static final String URL1 = "http://api.openweathermap.org/data/2.5/weather?q=";
     public static final String URL2 = "&APPID=f3cc1b22c0232ac17cdaaa7dced8322e&units=metric";
 
+    private static final int TIMEOUT = 5000;
+
     private static final OkHttpClient client = new OkHttpClient();
     private static Gson gson = new Gson();
 
@@ -38,7 +40,8 @@ public class WeatherReader {
                     con.setRequestMethod("GET");
                     con.setDoInput(true);
                     con.setDoOutput(true);
-                    con.setConnectTimeout(5000);
+                    con.setConnectTimeout(TIMEOUT);
+                    con.setReadTimeout(TIMEOUT);
                     con.connect();
 
                     StringBuffer buffer = new StringBuffer();
@@ -51,13 +54,6 @@ public class WeatherReader {
 
                     is.close();
                     con.disconnect();
-                    /*Response response = client.newCall(request).execute();
-
-                    if (!response.isSuccessful()) {
-                        throw new IOException("Invalid response:" + response);
-                    }
-
-                    String responseStr = response.body().string();*/
                     WeatherResponse weatherResponse = gson.fromJson(buffer.toString(), WeatherResponse.class);
 
                     subscriber.onNext(weatherResponse);
