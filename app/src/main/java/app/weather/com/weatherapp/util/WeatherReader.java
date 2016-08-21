@@ -34,7 +34,7 @@ public class WeatherReader {
                     HttpURLConnection con = null ;
                     InputStream is = null;
 
-                    con = (HttpURLConnection) ( new URL("http://api.openweathermap.org/data/2.5/weather?q=Sydney&APPID=f3cc1b22c0232ac17cdaaa7dced8322e&units=metric")).openConnection();
+                    con = (HttpURLConnection) ( new URL(URL1 + city + URL2)).openConnection();
                     con.setRequestMethod("GET");
                     con.setDoInput(true);
                     con.setDoOutput(true);

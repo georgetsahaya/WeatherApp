@@ -16,6 +16,9 @@ public class WeatherResponse implements Serializable {
     @SerializedName("wind")
     Wind wind;
 
+    @SerializedName("name")
+    String name;
+
     //The remaining response is not required hence not reading them
 
     public Wind getWind() {
@@ -28,5 +31,9 @@ public class WeatherResponse implements Serializable {
 
     public MainTemperature getMain() {
         return main;
+    }
+
+    public String getCityName() {
+        return name;
     }
 }
