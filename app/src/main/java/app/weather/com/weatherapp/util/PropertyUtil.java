@@ -10,8 +10,19 @@ import java.util.List;
 import java.util.Properties;
 
 public class PropertyUtil {
+    /*
+     * Number of city names read from the config file
+     */
     private static final int cityLimit = 100;
+
+    /*
+     * configuration file where the city names are provided
+     */
     private static final String CITY_CONFIG_FILE = "cities.properties";
+
+    /*
+     * The prefix of the city names. It goes like city1=Sydney, etc.
+     */
     private static final String CITY_NAME_PREFIX = "city";
 
     public static List<String> getCityList(Context context) {
@@ -28,6 +39,7 @@ public class PropertyUtil {
             return toRet;
         }
 
+        //Reading the city names from the config file
         for (int i = 1;i < cityLimit;i++) {
             String cityName = (String) properties.get(CITY_NAME_PREFIX + String.valueOf(i));
             if (cityName != null) {

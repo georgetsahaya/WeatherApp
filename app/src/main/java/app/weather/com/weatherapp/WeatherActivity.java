@@ -45,9 +45,22 @@ public class WeatherActivity extends AppCompatActivity {
 
     ProgressDialog progressDialog;
 
-    private final String [] noCity = { "noCities" };
+    /*
+     * If no cities are provided in the property file, thid default one is uses
+     */
+    private final String [] noCity = { "No Cities" };
+
     private final String EMPTY_STRING = "";
+
+    /*
+     * The weather API provides the values in meter/sec. To convert it into Km/H, the value needs
+     * to be multiplied by 3.6
+     */
     private final float KMPH_CONVERSION_FACTOR = 3.6f;
+
+    /*
+     * The date format gives "Thursday 11:00 AM" like format
+     */
     private final String DATE_FORMAT = "EEEE h:mm a";
 
     List<String> cityList;
@@ -58,10 +71,15 @@ public class WeatherActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_weather);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        loadViews();
+    }
+
+    private void loadViews() {
         tAdd = (LinearLayout) findViewById(R.id.tAdd);
         eNewCity = (EditText) findViewById(R.id.cityNew);
         configureFooter();
@@ -87,6 +105,9 @@ public class WeatherActivity extends AppCompatActivity {
         tAdd.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                /*
+                 * To add new city
+                 */
                 resetCitySpinner(eNewCity.getText().toString());
 
                 InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -130,8 +151,6 @@ public class WeatherActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 showDialog();
                 final String cityName = (String) parent.getItemAtPosition(position);
-
-                tCity.setText(cityName);
 
                 weatherResponseObservable = WeatherReader.getWeather(cityName);
                 weatherResponseObservable.subscribeOn(Schedulers.io())
@@ -182,8 +201,6 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     private String getKmphFromMps(String mps) {
-        String toRet;
-
         try {
             double kmph = Float.valueOf(mps) * KMPH_CONVERSION_FACTOR;
 

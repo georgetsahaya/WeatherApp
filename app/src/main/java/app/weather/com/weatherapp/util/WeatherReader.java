@@ -19,9 +19,15 @@ import rx.Observable;
 import rx.Subscriber;
 
 public class WeatherReader {
+    /*
+     * Reading the weather info from the openweathermap site with the API key
+     */
     public static final String URL1 = "http://api.openweathermap.org/data/2.5/weather?q=";
     public static final String URL2 = "&APPID=f3cc1b22c0232ac17cdaaa7dced8322e&units=metric";
 
+    /*
+     * Socket timeout
+     */
     private static final int TIMEOUT = 5000;
 
     private static final OkHttpClient client = new OkHttpClient();
