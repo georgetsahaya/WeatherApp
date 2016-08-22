@@ -25,22 +25,14 @@ import java.util.List;
 import app.weather.com.weatherapp.model.WeatherResponse;
 import app.weather.com.weatherapp.util.PropertyUtil;
 import app.weather.com.weatherapp.util.WeatherReader;
+import app.weather.com.weatherapp.view.WeatherView;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 
 public class WeatherActivity extends AppCompatActivity {
-    TextView tCity;
-    TextView tUpdatedTime;
-    TextView tWeather;
-    TextView tTemperature;
-    TextView tWind;
-
-    TextView eNewCity;
-    LinearLayout tAdd;
-
-    Spinner citiesSpinner;
+    WeatherView weatherView;
     ArrayAdapter<CharSequence> spinnerAdapter;
 
     ProgressDialog progressDialog;
@@ -49,19 +41,6 @@ public class WeatherActivity extends AppCompatActivity {
      * If no cities are provided in the property file, thid default one is uses
      */
     private final String [] noCity = { "No Cities" };
-
-    private final String EMPTY_STRING = "";
-
-    /*
-     * The weather API provides the values in meter/sec. To convert it into Km/H, the value needs
-     * to be multiplied by 3.6
-     */
-    private final float KMPH_CONVERSION_FACTOR = 3.6f;
-
-    /*
-     * The date format gives "Thursday 11:00 AM" like format
-     */
-    private final String DATE_FORMAT = "EEEE h:mm a";
 
     List<String> cityList;
     List<String> addedCities = new LinkedList<>();
@@ -80,19 +59,19 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     private void loadViews() {
-        tAdd = (LinearLayout) findViewById(R.id.tAdd);
-        eNewCity = (EditText) findViewById(R.id.cityNew);
-        configureFooter();
+        weatherView = (WeatherView) findViewById(R.id.weatherView);
 
-        tCity = (TextView) findViewById(R.id.city);
-        tUpdatedTime = (TextView) findViewById(R.id.updatedTime);
-        tWeather = (TextView) findViewById(R.id.weather);
-        tTemperature = (TextView) findViewById(R.id.temperature);
-        tWind = (TextView) findViewById(R.id.wind);
-
-        citiesSpinner = (Spinner) findViewById(R.id.citiSpinner);
         cityList = PropertyUtil.getCityList(getApplicationContext());
-        configureSpinner();
+        progressDialog = new ProgressDialog(this);
+
+        configureSpinner(false, null);
+
+        configureFooter();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
     }
 
     @Override
@@ -102,37 +81,38 @@ public class WeatherActivity extends AppCompatActivity {
     }
 
     private void configureFooter() {
-        tAdd.setOnClickListener(new View.OnClickListener() {
+        weatherView.setAddActionListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 /*
                  * To add new city
                  */
-                resetCitySpinner(eNewCity.getText().toString());
+                resetCitySpinner(weatherView.getAddedCity());
 
                 InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-                eNewCity.setText("");
+                weatherView.clearAddCity();
             }
         });
     }
 
     private void resetCitySpinner(String newCity) {
         addedCities.add(newCity);
-        configureSpinner();
+        configureSpinner(true, newCity);
         spinnerAdapter.notifyDataSetChanged();
     }
 
-    private void configureSpinner() {
+    private void configureSpinner(final boolean isReset, final String newCity) {
         List<String> listToShow = new ArrayList<>();
+        int currPos = weatherView.getCitiesSpinner().getSelectedItemPosition();
 
         if (cityList.size() == 0 && addedCities.size() == 0) {
             listToShow.addAll(Arrays.asList(noCity));
-            citiesSpinner.setEnabled(false);
+            weatherView.getCitiesSpinner().setEnabled(false);
         } else {
             listToShow.addAll(addedCities);
             listToShow.addAll(cityList);
-            citiesSpinner.setEnabled(true);
+            weatherView.getCitiesSpinner().setEnabled(true);
         }
 
         HashSet<String> hashSet = new HashSet<>();
@@ -145,8 +125,8 @@ public class WeatherActivity extends AppCompatActivity {
                 listToShow);
 
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        citiesSpinner.setAdapter(spinnerAdapter);
-        citiesSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        weatherView.getCitiesSpinner().setAdapter(spinnerAdapter);
+        weatherView.getCitiesSpinner().setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 showDialog();
@@ -157,13 +137,13 @@ public class WeatherActivity extends AppCompatActivity {
                         .observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<WeatherResponse>() {
                     @Override
                     public void call(WeatherResponse weatherResponse) {
-                        fillTable(weatherResponse);
+                        weatherView.fillTable(weatherResponse);
                         progressDialog.dismiss();
                     }
                 }, new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
-                        clearTable();
+                        weatherView.clearTable();
                         progressDialog.dismiss();
 
                     }
@@ -175,47 +155,16 @@ public class WeatherActivity extends AppCompatActivity {
 
             }
         });
-    }
 
-    private void fillTable(WeatherResponse weatherResponse) {
-        tCity.setText(weatherResponse.getCityName());
-        tUpdatedTime.setText(getTimeStamp());
-        tTemperature.setText(weatherResponse.getMain().getTemp() + "\u2103");
-        tWeather.setText(weatherResponse.getWeather().get(0).getDescription());
-        tWind.setText(getKmphFromMps(weatherResponse.getWind().getSpeed()));
-    }
-
-    private void clearTable() {
-        tCity.setText(EMPTY_STRING);
-        tUpdatedTime.setText(EMPTY_STRING);
-        tTemperature.setText(EMPTY_STRING);
-        tWeather.setText(EMPTY_STRING);
-        tWind.setText(EMPTY_STRING);
+        if (isReset) {
+            weatherView.getCitiesSpinner().setSelection(spinnerAdapter.getPosition(newCity));
+            progressDialog.dismiss();
+        }
     }
 
     private void showDialog() {
-        progressDialog = new ProgressDialog(this);
         progressDialog.setTitle(R.string.app_name);
         progressDialog.setMessage(getString(R.string.getting_weather));
         progressDialog.show();
-    }
-
-    private String getKmphFromMps(String mps) {
-        try {
-            double kmph = Float.valueOf(mps) * KMPH_CONVERSION_FACTOR;
-
-            return String.format("%.2f", kmph) + " km/H";
-        } catch (ArithmeticException e) {
-            return "0 Km/H";
-        }
-    }
-
-    private String getTimeStamp() {
-        try {
-            SimpleDateFormat df = new SimpleDateFormat(DATE_FORMAT);
-            return df.format(new Date());
-        } catch (Exception e) {
-            return "";
-        }
     }
 }
